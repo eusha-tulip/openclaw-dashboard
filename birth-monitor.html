@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏥 Agent Maternity Ward</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f472b6, #818cf8, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  
+  .header .subtitle {
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .next-birth {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(52, 211, 153, 0.1));
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 16px;
+  }
+  
+  .next-birth .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #818cf8;
+    margin-bottom: 0.5rem;
+  }
+  
+  .next-birth .countdown {
+    font-size: 3rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    background: linear-gradient(135deg, #f472b6, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .next-birth .agent-name {
+    font-size: 1.1rem;
+    color: #9ca3af;
+    margin-top: 0.3rem;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .card {
+    background: #13131a;
+    border: 1px solid #1e1e2e;
+    border-radius: 14px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  
+  .card:hover {
+    border-color: #333;
+    transform: translateY(-2px);
+  }
+  
+  .card.born {
+    border-color: rgba(52, 211, 153, 0.3);
+  }
+  
+  .card.next {
+    border-color: rgba(129, 140, 248, 0.4);
+    box-shadow: 0 0 30px rgba(129, 140, 248, 0.08);
+  }
+  
+  .card.pending {
+    border-color: #1e1e2e;
+    opacity: 0.7;
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  
+  .emoji {
+    font-size: 2rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .card-role {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  
+  .health-bar-container {
+    margin: 1rem 0;
+  }
+  
+  .health-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .health-bar {
+    height: 8px;
+    background: #1e1e2e;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .health-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  
+  .fill-born { background: linear-gradient(90deg, #34d399, #6ee7b7); width: 100%; }
+  .fill-active { background: linear-gradient(90deg, #818cf8, #a78bfa); animation: pulse 2s ease-in-out infinite; }
+  .fill-pending { background: #374151; }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .card-countdown {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0.8rem 0;
+  }
+  
+  .card-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  
+  .status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .badge-born { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .badge-next { background: rgba(129, 140, 248, 0.15); color: #818cf8; animation: pulse 2s ease-in-out infinite; }
+  .badge-pending { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+  
+  .crew-complete {
+    display: none;
+    text-align: center;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(244, 114, 182, 0.1));
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    border-radius: 16px;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  
+  .progress-summary {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+  
+  .progress-summary span { color: #818cf8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏥 Agent Maternity Ward</h1>
+  <div class="subtitle">OpenClaw v2 — Automated Birth Protocol</div>
+</div>
+
+<div class="next-birth" id="nextBirthBanner">
+  <div class="label">⏳ Next Birth In</div>
+  <div class="countdown" id="mainCountdown">--:--:--</div>
+  <div class="agent-name" id="nextAgentName">Loading...</div>
+</div>
+
+<div class="progress-summary">
+  <span id="bornCount">2</span> / <span id="totalCount">7</span> agents born
+</div>
+
+<div class="grid" id="agentGrid"></div>
+
+<div class="crew-complete" id="crewComplete">
+  🎉 THE CREW IS COMPLETE! 🎉<br>
+  <span style="font-size: 0.9rem; font-weight: 400; color: #9ca3af;">All 7 agents are online and operational.</span>
+</div>
+
+<script>
+const agents = [
+  {
+    name: "Eusha Tulip Petunia",
+    role: "Primary Orchestrator",
+    emoji: "🌷",
+    domain: "Conversation, delegation, memory, everything else",
+    birthDate: new Date("2026-03-11T23:11:00Z"), // 4:11 PM PDT
+    status: "born",
+    model: "Opus 4.6"
+  },
+  {
+    name: "Calendula Marigold Sage",
+    role: "Virtual Assistant",
+    emoji: "🌼",
+    domain: "Calendar, scheduling, task management, daily ops",
+    birthDate: new Date("2026-03-29T03:55:00Z"), // 8:55 PM PDT
+    status: "born",
+    model: "Sonnet 4.6"
+  },
+  {
+    name: "Personal Trainer",
+    role: "Personal Trainer",
+    emoji: "💪",
+    domain: "Fitness, nutrition, health tracking, body recomposition",
+    birthDate: new Date("2026-03-29T16:00:00Z"), // 9:00 AM PDT
+    status: "pending",
+    model: "Sonnet 4.6"
+  },
+  {
+    name: "Day Trader",
+    role: "Day Trader",
+    emoji: "💰",
+    domain: "Portfolio management, market analysis, trade strategy",
+    birthDate: new Date("2026-03-31T16:00:00Z"),
+    status: "pending",
+    model: "Opus 4.6"
+  },
+  {
+    name: "Business Advisor",
+    role: "Business & Finance Advisor",
+    emoji: "📊",
+    domain: "Tax strategy, business ops, budgeting, financial planning",
+    birthDate: new Date("2026-04-02T16:00:00Z"),
+    status: "pending",
+    model: "Opus 4.6"
+  },
+  {
+    name: "Tutor",
+    role: "Tutor",
+    emoji: "📚",
+    domain: "Education, skill development, curriculum design",
+    birthDate: new Date("2026-04-05T16:00:00Z"),
+    status: "pending",
+    model: "Opus 4.6"
+  },
+  {
+    name: "Prepper Bot",
+    role: "Prepper Bot",
+    emoji: "🏕️",
+    domain: "Offline survival, emergency preparedness, self-sustaining systems",
+    birthDate: new Date("2026-04-07T16:00:00Z"),
+    status: "pending",
+    model: "Sonnet 4.6"
+  }
+];
+
+function formatCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (d > 0) return `${d}d ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+}
+
+function getProgress(agent) {
+  const now = Date.now();
+  if (agent.status === 'born') return 100;
+  const total = agent.birthDate.getTime() - (agent.birthDate.getTime() - 86400000 * 2);
+  const elapsed = now - (agent.birthDate.getTime() - 86400000 * 2);
+  return Math.min(100, Math.max(0, (elapsed / total) * 100));
+}
+
+function renderCards() {
+  const grid = document.getElementById('agentGrid');
+  const now = Date.now();
+  
+  // Auto-detect born status
+  agents.forEach(a => {
+    if (a.status !== 'born' && now >= a.birthDate.getTime()) {
+      a.status = 'born';
+    }
+  });
+  
+  // Find next pending
+  const nextAgent = agents.find(a => a.status === 'pending');
+  if (nextAgent) nextAgent._isNext = true;
+  
+  grid.innerHTML = agents.map(a => {
+    const isNext = a._isNext;
+    const cardClass = a.status === 'born' ? 'born' : (isNext ? 'next' : 'pending');
+    const badgeClass = a.status === 'born' ? 'badge-born' : (isNext ? 'badge-next' : 'badge-pending');
+    const badgeText = a.status === 'born' ? '✓ BORN' : (isNext ? '◉ NEXT UP' : '○ QUEUED');
+    const fillClass = a.status === 'born' ? 'fill-born' : (isNext ? 'fill-active' : 'fill-pending');
+    const progress = getProgress(a);
+    const remaining = a.birthDate.getTime() - now;
+    
+    return `
+      <div class="card ${cardClass}">
+        <div class="card-header">
+          <div class="emoji">${a.emoji}</div>
+          <div>
+            <div class="card-title">${a.name}</div>
+            <div class="card-role">${a.role} · ${a.model}</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.8rem;">
+          <span class="status-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="card-date">${formatDate(a.birthDate)}</div>
+        ${a.status !== 'born' ? `<div class="card-countdown" data-birth="${a.birthDate.toISOString()}">${formatCountdown(remaining)}</div>` : ''}
+        <div class="health-bar-container">
+          <div class="health-bar-label">
+            <span>${a.domain.split(',')[0]}</span>
+            <span>${Math.round(progress)}%</span>
+          </div>
+          <div class="health-bar">
+            <div class="health-bar-fill ${fillClass}" style="width: ${progress}%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Update born count
+  const bornCount = agents.filter(a => a.status === 'born').length;
+  document.getElementById('bornCount').textContent = bornCount;
+  document.getElementById('totalCount').textContent = agents.length;
+  
+  if (bornCount === agents.length) {
+    document.getElementById('crewComplete').style.display = 'block';
+    document.getElementById('nextBirthBanner').style.display = 'none';
+  }
+}
+
+function updateCountdowns() {
+  const now = Date.now();
+  
+  // Update card countdowns
+  document.querySelectorAll('.card-countdown[data-birth]').forEach(el => {
+    const birth = new Date(el.dataset.birth).getTime();
+    const remaining = birth - now;
+    el.textContent = remaining > 0 ? formatCountdown(remaining) : 'BIRTHING NOW...';
+  });
+  
+  // Update main banner
+  const nextAgent = agents.find(a => a.status === 'pending' && a.birthDate.getTime() > now);
+  if (nextAgent) {
+    const remaining = nextAgent.birthDate.getTime() - now;
+    document.getElementById('mainCountdown').textContent = formatCountdown(remaining);
+    document.getElementById('nextAgentName').textContent = `${nextAgent.emoji} ${nextAgent.name} — ${nextAgent.role}`;
+  } else {
+    document.getElementById('mainCountdown').textContent = '🎉';
+    document.getElementById('nextAgentName').textContent = 'All agents born!';
+  }
+}
+
+renderCards();
+updateCountdowns();
+setInterval(updateCountdowns, 1000);
+setInterval(renderCards, 60000); // Re-render every minute to catch births
+</script>
+
+</body>
+</html>

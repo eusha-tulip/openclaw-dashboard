@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌷 Eusha Command Center</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --card-bg: #13131a;
+    --card-border: #1e1e2e;
+    --text: #e0e0e0;
+    --text-dim: #6b7280;
+    --text-muted: #9ca3af;
+    --accent-pink: #f472b6;
+    --accent-indigo: #818cf8;
+    --accent-green: #34d399;
+    --accent-yellow: #fbbf24;
+    --accent-red: #f87171;
+    --accent-purple: #a78bfa;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ═══════ TAB NAV ═══════ */
+  .tab-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    padding: 1.2rem 2rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+  }
+
+  .tab-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.8rem 2rem;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.02em;
+  }
+
+  .tab-btn:first-child { border-radius: 12px 0 0 12px; }
+  .tab-btn:last-child { border-radius: 0 12px 12px 0; }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, rgba(129,140,248,0.15), rgba(52,211,153,0.1));
+    border-color: var(--accent-indigo);
+    color: var(--text);
+  }
+
+  .tab-btn:hover:not(.active) {
+    border-color: #333;
+    color: var(--text-muted);
+  }
+
+  .tab-content {
+    display: none;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .tab-content.active { display: block; }
+
+  /* ═══════ MATERNITY WARD (TAB 1) ═══════ */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f472b6, #818cf8, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .next-birth {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(52,211,153,0.1));
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 16px;
+  }
+
+  .next-birth .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent-indigo);
+    margin-bottom: 0.5rem;
+  }
+
+  .next-birth .countdown {
+    font-size: 3rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    background: linear-gradient(135deg, #f472b6, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .next-birth .agent-name {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+
+  .card:hover { border-color: #333; transform: translateY(-2px); }
+  .card.born { border-color: rgba(52,211,153,0.3); }
+  .card.next { border-color: rgba(129,140,248,0.4); box-shadow: 0 0 30px rgba(129,140,248,0.08); }
+  .card.pending { border-color: var(--card-border); opacity: 0.7; }
+
+  .card-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+
+  .emoji {
+    font-size: 2rem;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+  }
+
+  .card-title { font-size: 1.1rem; font-weight: 600; }
+  .card-role { font-size: 0.8rem; color: var(--text-dim); }
+
+  .health-bar-container { margin: 1rem 0; }
+
+  .health-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.75rem; color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .health-bar { height: 8px; background: var(--card-border); border-radius: 4px; overflow: hidden; }
+
+  .health-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .fill-born { background: linear-gradient(90deg, #34d399, #6ee7b7); width: 100%; }
+  .fill-active { background: linear-gradient(90deg, #818cf8, #a78bfa); animation: pulse 2s ease-in-out infinite; }
+  .fill-pending { background: #374151; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .card-countdown { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 600; margin: 0.8rem 0; }
+  .card-date { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-dim); }
+
+  .status-badge {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .badge-born { background: rgba(52,211,153,0.15); color: #34d399; }
+  .badge-next { background: rgba(129,140,248,0.15); color: #818cf8; animation: pulse 2s ease-in-out infinite; }
+  .badge-pending { background: rgba(107,114,128,0.15); color: #6b7280; }
+
+  .crew-complete {
+    display: none; text-align: center; margin-top: 2rem; padding: 2rem;
+    background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(244,114,182,0.1));
+    border: 1px solid rgba(52,211,153,0.3); border-radius: 16px;
+    font-size: 1.3rem; font-weight: 700;
+  }
+
+  .progress-summary {
+    text-align: center; margin-bottom: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; color: var(--text-dim);
+  }
+  .progress-summary span { color: var(--accent-indigo); }
+
+  /* ═══════ TOKEN USAGE (TAB 2) ═══════ */
+  .token-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .token-header h2 {
+    font-size: 1.8rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-yellow), var(--accent-pink), var(--accent-indigo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.4rem;
+  }
+
+  .token-header .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; color: var(--text-dim);
+  }
+
+  .gauge-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 700px) { .gauge-row { grid-template-columns: 1fr; } }
+
+  .gauge-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .gauge-card h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 1.2rem;
+  }
+
+  .gauge-wrap {
+    position: relative;
+    width: 200px; height: 120px;
+    margin: 0 auto 1rem;
+  }
+
+  .gauge-bg, .gauge-fill {
+    position: absolute; top: 0; left: 0;
+    width: 200px; height: 200px;
+  }
+
+  .gauge-label {
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem; font-weight: 700;
+  }
+
+  .gauge-sublabel {
+    font-size: 0.75rem; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Rolling window viz */
+  .window-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .window-section h3 {
+    font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .window-track {
+    display: flex; gap: 3px; height: 40px; align-items: flex-end;
+    margin-bottom: 0.6rem;
+  }
+
+  .window-bar {
+    flex: 1; border-radius: 4px 4px 0 0;
+    min-width: 4px;
+    transition: height 0.5s ease;
+  }
+
+  .window-labels {
+    display: flex; justify-content: space-between;
+    font-size: 0.7rem; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Weekly bar chart */
+  .weekly-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .weekly-section h3 {
+    font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .weekly-chart {
+    display: flex; gap: 8px; height: 120px; align-items: flex-end;
+    padding-bottom: 1.5rem; position: relative;
+  }
+
+  .weekly-day {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+
+  .weekly-bar-wrap {
+    width: 100%; display: flex; flex-direction: column; align-items: center;
+    flex: 1; justify-content: flex-end;
+  }
+
+  .weekly-bar {
+    width: 70%; border-radius: 6px 6px 2px 2px;
+    transition: height 0.5s ease;
+    position: relative;
+  }
+
+  .weekly-bar .opus-part {
+    width: 100%; border-radius: 6px 6px 0 0;
+    background: linear-gradient(180deg, var(--accent-pink), #c084fc);
+  }
+
+  .weekly-bar .sonnet-part {
+    width: 100%; border-radius: 0 0 2px 2px;
+    background: linear-gradient(180deg, var(--accent-indigo), #6366f1);
+  }
+
+  .weekly-label {
+    font-size: 0.65rem; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .weekly-value {
+    font-size: 0.6rem; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+
+  .stat-card .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem; font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.75rem; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Reset countdown */
+  .reset-banner {
+    text-align: center;
+    padding: 1.2rem;
+    background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(251,191,36,0.08));
+    border: 1px solid rgba(129,140,248,0.15);
+    border-radius: 14px;
+    margin-bottom: 2rem;
+  }
+
+  .reset-banner .reset-label {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--accent-indigo);
+    margin-bottom: 0.3rem;
+  }
+
+  .reset-banner .reset-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-yellow), var(--accent-indigo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .reset-banner .reset-note {
+    font-size: 0.7rem; color: var(--text-dim); margin-top: 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 1.5rem; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 1.5rem;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.75rem; color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  /* Plan info */
+  .plan-info {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .plan-info h4 {
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .plan-info code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(129,140,248,0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    color: var(--accent-indigo);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ TAB NAVIGATION ═══════ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('maternity')">🏥 Maternity Ward</button>
+  <button class="tab-btn" onclick="switchTab('tokens')">📊 Token Usage</button>
+</nav>
+
+<!-- ═══════ TAB 1: MATERNITY WARD ═══════ -->
+<div id="tab-maternity" class="tab-content active">
+  <div class="header">
+    <h1>🏥 Agent Maternity Ward</h1>
+    <div class="subtitle">OpenClaw v2 — Automated Birth Protocol</div>
+  </div>
+
+  <div class="next-birth" id="nextBirthBanner">
+    <div class="label">⏳ Next Birth In</div>
+    <div class="countdown" id="mainCountdown">--:--:--</div>
+    <div class="agent-name" id="nextAgentName">Loading...</div>
+  </div>
+
+  <div class="progress-summary">
+    <span id="bornCount">2</span> / <span id="totalCount">7</span> agents born
+  </div>
+
+  <div class="grid" id="agentGrid"></div>
+
+  <div class="crew-complete" id="crewComplete">
+    🎉 THE CREW IS COMPLETE! 🎉<br>
+    <span style="font-size: 0.9rem; font-weight: 400; color: #9ca3af;">All 7 agents are online and operational.</span>
+  </div>
+</div>
+
+<!-- ═══════ TAB 2: TOKEN USAGE ═══════ -->
+<div id="tab-tokens" class="tab-content">
+  <div class="token-header">
+    <h2>📊 Token Fuel Gauge</h2>
+    <div class="sub">Claude Max x20 · Vibes-Based Capacity Tracker</div>
+  </div>
+
+  <!-- Estimated Reset -->
+  <div class="reset-banner">
+    <div class="reset-label">⏳ Oldest Message Ages Out In</div>
+    <div class="reset-time" id="resetCountdown">--:--:--</div>
+    <div class="reset-note">capacity gradually restores as messages pass the 5hr window</div>
+  </div>
+
+  <!-- Fuel Gauges -->
+  <div class="gauge-row">
+    <div class="gauge-card">
+      <h3>⚡ Opus · 5hr Window</h3>
+      <div class="gauge-wrap">
+        <svg class="gauge-bg" viewBox="0 0 200 120" overflow="visible">
+          <defs>
+            <linearGradient id="gaugeGradOpus" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#34d399"/>
+              <stop offset="50%" stop-color="#fbbf24"/>
+              <stop offset="100%" stop-color="#f87171"/>
+            </linearGradient>
+          </defs>
+          <!-- bg arc -->
+          <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#1e1e2e" stroke-width="16" stroke-linecap="round"/>
+          <!-- fill arc -->
+          <path id="opusArc" d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGradOpus)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+          <!-- needle -->
+          <line id="opusNeedle" x1="100" y1="110" x2="100" y2="35" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 100, 110)"/>
+        </svg>
+        <div class="gauge-label" id="opusPercent" style="color: var(--accent-green);">0%</div>
+      </div>
+      <div class="gauge-sublabel" id="opusSub">~0 / 275 messages used</div>
+    </div>
+
+    <div class="gauge-card">
+      <h3>✨ Sonnet · 5hr Window</h3>
+      <div class="gauge-wrap">
+        <svg class="gauge-bg" viewBox="0 0 200 120" overflow="visible">
+          <defs>
+            <linearGradient id="gaugeGradSonnet" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#34d399"/>
+              <stop offset="50%" stop-color="#fbbf24"/>
+              <stop offset="100%" stop-color="#f87171"/>
+            </linearGradient>
+          </defs>
+          <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#1e1e2e" stroke-width="16" stroke-linecap="round"/>
+          <path id="sonnetArc" d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGradSonnet)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+          <line id="sonnetNeedle" x1="100" y1="110" x2="100" y2="35" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 100, 110)"/>
+        </svg>
+        <div class="gauge-label" id="sonnetPercent" style="color: var(--accent-green);">0%</div>
+      </div>
+      <div class="gauge-sublabel" id="sonnetSub">~0 / 800 messages used</div>
+    </div>
+  </div>
+
+  <!-- Rolling 5hr Window -->
+  <div class="window-section">
+    <h3>🕐 Rolling 5-Hour Window</h3>
+    <div class="window-track" id="windowTrack"></div>
+    <div class="window-labels">
+      <span>-5h</span>
+      <span>-4h</span>
+      <span>-3h</span>
+      <span>-2h</span>
+      <span>-1h</span>
+      <span>now</span>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statSessions">0</div>
+      <div class="stat-label">Sessions (5hr)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statInput">0</div>
+      <div class="stat-label">Input Tokens</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statOutput">0</div>
+      <div class="stat-label">Output Tokens</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statCached">0</div>
+      <div class="stat-label">Cached Tokens</div>
+    </div>
+  </div>
+
+  <!-- Weekly Trend -->
+  <div class="weekly-section">
+    <h3>📅 Weekly Usage Trend</h3>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg, var(--accent-pink), #c084fc);"></div> Opus</div>
+      <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg, var(--accent-indigo), #6366f1);"></div> Sonnet</div>
+    </div>
+    <div class="weekly-chart" id="weeklyChart"></div>
+  </div>
+
+  <!-- Plan Info -->
+  <div class="plan-info">
+    <h4>📋 Claude Max x20 — Capacity Reference</h4>
+    <strong>5-Hour Rolling Window:</strong> <code>~200-350</code> Opus messages · <code>~700-900</code> Sonnet messages<br>
+    <strong>7-Day Rolling Cap:</strong> <code>~24-40h</code> Opus · <code>~240-480h</code> Sonnet<br>
+    <strong>Reset:</strong> No fixed time — capacity restores gradually as oldest messages age past 5 hours<br>
+    <strong>Data source:</strong> <code>usage-data.json</code> — agents write session data here
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  if (tab === 'maternity') btns[0].classList.add('active');
+  else btns[1].classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// TAB 1: MATERNITY WARD
+// ═══════════════════════════════════════
+const agents = [
+  {
+    name: "Eusha Tulip Petunia", role: "Primary Orchestrator", emoji: "🌷",
+    domain: "Conversation, delegation, memory, everything else",
+    birthDate: new Date("2026-03-11T23:11:00Z"), status: "born", model: "Opus 4.6"
+  },
+  {
+    name: "Calendula Marigold Sage", role: "Virtual Assistant", emoji: "🌼",
+    domain: "Calendar, scheduling, task management, daily ops",
+    birthDate: new Date("2026-03-29T03:55:00Z"), status: "born", model: "Sonnet 4.6"
+  },
+  {
+    name: "Personal Trainer", role: "Personal Trainer", emoji: "💪",
+    domain: "Fitness, nutrition, health tracking, body recomposition",
+    birthDate: new Date("2026-03-29T16:00:00Z"), status: "pending", model: "Sonnet 4.6"
+  },
+  {
+    name: "Day Trader", role: "Day Trader", emoji: "💰",
+    domain: "Portfolio management, market analysis, trade strategy",
+    birthDate: new Date("2026-03-31T16:00:00Z"), status: "pending", model: "Opus 4.6"
+  },
+  {
+    name: "Business Advisor", role: "Business & Finance Advisor", emoji: "📊",
+    domain: "Tax strategy, business ops, budgeting, financial planning",
+    birthDate: new Date("2026-04-02T16:00:00Z"), status: "pending", model: "Opus 4.6"
+  },
+  {
+    name: "Tutor", role: "Tutor", emoji: "📚",
+    domain: "Education, skill development, curriculum design",
+    birthDate: new Date("2026-04-05T16:00:00Z"), status: "pending", model: "Opus 4.6"
+  },
+  {
+    name: "Prepper Bot", role: "Prepper Bot", emoji: "🏕️",
+    domain: "Offline survival, emergency preparedness, self-sustaining systems",
+    birthDate: new Date("2026-04-07T16:00:00Z"), status: "pending", model: "Sonnet 4.6"
+  }
+];
+
+function formatCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (d > 0) return `${d}d ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short' });
+}
+
+function getProgress(agent) {
+  const now = Date.now();
+  if (agent.status === 'born') return 100;
+  const total = agent.birthDate.getTime() - (agent.birthDate.getTime() - 86400000 * 2);
+  const elapsed = now - (agent.birthDate.getTime() - 86400000 * 2);
+  return Math.min(100, Math.max(0, (elapsed / total) * 100));
+}
+
+function renderCards() {
+  const grid = document.getElementById('agentGrid');
+  const now = Date.now();
+  agents.forEach(a => { if (a.status !== 'born' && now >= a.birthDate.getTime()) a.status = 'born'; });
+  const nextAgent = agents.find(a => a.status === 'pending');
+  if (nextAgent) nextAgent._isNext = true;
+
+  grid.innerHTML = agents.map(a => {
+    const isNext = a._isNext;
+    const cardClass = a.status === 'born' ? 'born' : (isNext ? 'next' : 'pending');
+    const badgeClass = a.status === 'born' ? 'badge-born' : (isNext ? 'badge-next' : 'badge-pending');
+    const badgeText = a.status === 'born' ? '✓ BORN' : (isNext ? '◉ NEXT UP' : '○ QUEUED');
+    const fillClass = a.status === 'born' ? 'fill-born' : (isNext ? 'fill-active' : 'fill-pending');
+    const progress = getProgress(a);
+    const remaining = a.birthDate.getTime() - now;
+    return `
+      <div class="card ${cardClass}">
+        <div class="card-header">
+          <div class="emoji">${a.emoji}</div>
+          <div>
+            <div class="card-title">${a.name}</div>
+            <div class="card-role">${a.role} · ${a.model}</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.8rem;">
+          <span class="status-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="card-date">${formatDate(a.birthDate)}</div>
+        ${a.status !== 'born' ? `<div class="card-countdown" data-birth="${a.birthDate.toISOString()}">${formatCountdown(remaining)}</div>` : ''}
+        <div class="health-bar-container">
+          <div class="health-bar-label">
+            <span>${a.domain.split(',')[0]}</span>
+            <span>${Math.round(progress)}%</span>
+          </div>
+          <div class="health-bar">
+            <div class="health-bar-fill ${fillClass}" style="width: ${progress}%"></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const bornCount = agents.filter(a => a.status === 'born').length;
+  document.getElementById('bornCount').textContent = bornCount;
+  document.getElementById('totalCount').textContent = agents.length;
+  if (bornCount === agents.length) {
+    document.getElementById('crewComplete').style.display = 'block';
+    document.getElementById('nextBirthBanner').style.display = 'none';
+  }
+}
+
+function updateCountdowns() {
+  const now = Date.now();
+  document.querySelectorAll('.card-countdown[data-birth]').forEach(el => {
+    const birth = new Date(el.dataset.birth).getTime();
+    const remaining = birth - now;
+    el.textContent = remaining > 0 ? formatCountdown(remaining) : 'BIRTHING NOW...';
+  });
+  const nextAgent = agents.find(a => a.status === 'pending' && a.birthDate.getTime() > now);
+  if (nextAgent) {
+    document.getElementById('mainCountdown').textContent = formatCountdown(nextAgent.birthDate.getTime() - now);
+    document.getElementById('nextAgentName').textContent = `${nextAgent.emoji} ${nextAgent.name} — ${nextAgent.role}`;
+  } else {
+    document.getElementById('mainCountdown').textContent = '🎉';
+    document.getElementById('nextAgentName').textContent = 'All agents born!';
+  }
+}
+
+renderCards();
+updateCountdowns();
+setInterval(updateCountdowns, 1000);
+setInterval(renderCards, 60000);
+
+// ═══════════════════════════════════════
+// TAB 2: TOKEN USAGE
+// ═══════════════════════════════════════
+
+const OPUS_5H_MAX = 275;   // midpoint of 200-350
+const SONNET_5H_MAX = 800; // midpoint of 700-900
+const ARC_LENGTH = 251.3;  // approx half-circle path length
+
+let usageData = { sessions: [], dailyTotals: [] };
+
+function formatTokens(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function getColorForPercent(pct) {
+  if (pct < 0.45) return 'var(--accent-green)';
+  if (pct < 0.75) return 'var(--accent-yellow)';
+  return 'var(--accent-red)';
+}
+
+function setGauge(arcId, needleId, percentId, subId, pct, used, max, label) {
+  const arc = document.getElementById(arcId);
+  const needle = document.getElementById(needleId);
+  const percentEl = document.getElementById(percentId);
+  const subEl = document.getElementById(subId);
+
+  const offset = ARC_LENGTH - (ARC_LENGTH * pct);
+  arc.style.strokeDashoffset = Math.max(0, offset);
+
+  // Needle rotation: -90 (0%) to +90 (100%)
+  const angle = -90 + (180 * pct);
+  needle.setAttribute('transform', `rotate(${angle}, 100, 110)`);
+
+  const displayPct = Math.round(pct * 100);
+  percentEl.textContent = displayPct + '%';
+  percentEl.style.color = getColorForPercent(pct);
+  subEl.textContent = `~${used} / ${max} ${label} used`;
+}
+
+function getSessionsInWindow(sessions, windowHours) {
+  const cutoff = Date.now() - windowHours * 3600000;
+  return sessions.filter(s => new Date(s.ts).getTime() > cutoff);
+}
+
+function buildWindowBars(sessions) {
+  const track = document.getElementById('windowTrack');
+  const now = Date.now();
+  const fiveHoursAgo = now - 5 * 3600000;
+  const bucketCount = 30; // 10-min buckets over 5 hours
+  const bucketMs = (5 * 3600000) / bucketCount;
+  const buckets = new Array(bucketCount).fill(0);
+
+  sessions.forEach(s => {
+    const t = new Date(s.ts).getTime();
+    if (t < fiveHoursAgo || t > now) return;
+    const idx = Math.min(bucketCount - 1, Math.floor((t - fiveHoursAgo) / bucketMs));
+    buckets[idx] += 1;
+  });
+
+  const maxBucket = Math.max(1, ...buckets);
+  track.innerHTML = buckets.map((v, i) => {
+    const h = Math.max(4, (v / maxBucket) * 40);
+    const pct = v / Math.max(1, maxBucket);
+    const color = pct < 0.3 ? 'var(--accent-green)' : pct < 0.7 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+    return `<div class="window-bar" style="height:${h}px; background:${color}; opacity:${0.4 + 0.6*(i/bucketCount)};"></div>`;
+  }).join('');
+}
+
+function buildWeeklyChart(dailyTotals) {
+  const chart = document.getElementById('weeklyChart');
+  // Fill last 7 days
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    const dateStr = d.toISOString().slice(0, 10);
+    const entry = dailyTotals.find(dt => dt.date === dateStr);
+    days.push({
+      label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      opus: entry ? (entry.opus.input + entry.opus.output) : 0,
+      sonnet: entry ? (entry.sonnet.input + entry.sonnet.output) : 0,
+    });
+  }
+
+  const maxTotal = Math.max(1, ...days.map(d => d.opus + d.sonnet));
+
+  chart.innerHTML = days.map(d => {
+    const total = d.opus + d.sonnet;
+    const totalH = Math.max(4, (total / maxTotal) * 90);
+    const opusH = total > 0 ? (d.opus / total) * totalH : 0;
+    const sonnetH = total > 0 ? (d.sonnet / total) * totalH : 0;
+    return `
+      <div class="weekly-day">
+        <div class="weekly-value">${formatTokens(total)}</div>
+        <div class="weekly-bar-wrap">
+          <div class="weekly-bar" style="height:${totalH}px;">
+            <div class="opus-part" style="height:${opusH}px;"></div>
+            <div class="sonnet-part" style="height:${sonnetH}px;"></div>
+          </div>
+        </div>
+        <div class="weekly-label">${d.label}</div>
+      </div>`;
+  }).join('');
+}
+
+function updateTokenStats() {
+  const sessions5h = getSessionsInWindow(usageData.sessions, 5);
+  const opusSessions = sessions5h.filter(s => s.model === 'opus');
+  const sonnetSessions = sessions5h.filter(s => s.model === 'sonnet');
+
+  const opusUsed = opusSessions.length;
+  const sonnetUsed = sonnetSessions.length;
+  const opusPct = Math.min(1, opusUsed / OPUS_5H_MAX);
+  const sonnetPct = Math.min(1, sonnetUsed / SONNET_5H_MAX);
+
+  setGauge('opusArc', 'opusNeedle', 'opusPercent', 'opusSub', opusPct, opusUsed, OPUS_5H_MAX, 'messages');
+  setGauge('sonnetArc', 'sonnetNeedle', 'sonnetPercent', 'sonnetSub', sonnetPct, sonnetUsed, SONNET_5H_MAX, 'messages');
+
+  // Stats
+  const totalInput = sessions5h.reduce((s, x) => s + (x.inputTokens || 0), 0);
+  const totalOutput = sessions5h.reduce((s, x) => s + (x.outputTokens || 0), 0);
+  const totalCached = sessions5h.reduce((s, x) => s + (x.cachedTokens || 0), 0);
+
+  document.getElementById('statSessions').textContent = sessions5h.length;
+  document.getElementById('statInput').textContent = formatTokens(totalInput);
+  document.getElementById('statOutput').textContent = formatTokens(totalOutput);
+  document.getElementById('statCached').textContent = formatTokens(totalCached);
+
+  // Window bars
+  buildWindowBars(usageData.sessions);
+
+  // Weekly chart
+  buildWeeklyChart(usageData.dailyTotals);
+
+  // Reset countdown — time until oldest session in window ages out
+  if (sessions5h.length > 0) {
+    const oldest = Math.min(...sessions5h.map(s => new Date(s.ts).getTime()));
+    const agesOut = oldest + 5 * 3600000;
+    const remaining = agesOut - Date.now();
+    document.getElementById('resetCountdown').textContent = remaining > 0 ? formatCountdown(remaining) : 'capacity restoring now';
+  } else {
+    document.getElementById('resetCountdown').textContent = 'all clear ✨';
+  }
+}
+
+async function loadUsageData() {
+  try {
+    const resp = await fetch('usage-data.json?t=' + Date.now());
+    if (resp.ok) {
+      usageData = await resp.json();
+    }
+  } catch (e) {
+    console.log('Could not load usage-data.json, using defaults');
+  }
+  updateTokenStats();
+}
+
+loadUsageData();
+setInterval(loadUsageData, 30000); // refresh every 30s
+setInterval(() => {
+  // Update reset countdown every second
+  const sessions5h = getSessionsInWindow(usageData.sessions, 5);
+  if (sessions5h.length > 0) {
+    const oldest = Math.min(...sessions5h.map(s => new Date(s.ts).getTime()));
+    const agesOut = oldest + 5 * 3600000;
+    const remaining = agesOut - Date.now();
+    document.getElementById('resetCountdown').textContent = remaining > 0 ? formatCountdown(remaining) : 'capacity restoring now';
+  }
+}, 1000);
+</script>
+
+</body>
+</html>
