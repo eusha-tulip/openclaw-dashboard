@@ -600,7 +600,7 @@
     <strong>5-Hour Rolling Window:</strong> <code>~200-350</code> Opus messages · <code>~700-900</code> Sonnet messages<br>
     <strong>7-Day Rolling Cap:</strong> <code>~24-40h</code> Opus · <code>~240-480h</code> Sonnet<br>
     <strong>Reset:</strong> No fixed time — capacity restores gradually as oldest messages age past 5 hours<br>
-    <strong>Data source:</strong> <code>usage-data.json</code> — agents write session data here
+    <strong>Data source:</strong> <code>usage-data.json</code> — run <code>update-usage.ps1</code> to refresh from live session data
   </div>
 </div>
 
@@ -810,7 +810,7 @@ function buildWindowBars(sessions) {
     const t = new Date(s.ts).getTime();
     if (t < fiveHoursAgo || t > now) return;
     const idx = Math.min(bucketCount - 1, Math.floor((t - fiveHoursAgo) / bucketMs));
-    buckets[idx] += 1;
+    buckets[idx] += (s.totalTokens || 1);
   });
 
   const maxBucket = Math.max(1, ...buckets);
@@ -859,20 +859,24 @@ function buildWeeklyChart(dailyTotals) {
 }
 
 function updateTokenStats() {
-  const sessions5h = getSessionsInWindow(usageData.sessions, 5);
+  const allSessions = usageData.sessions || [];
+  const sessions5h = getSessionsInWindow(allSessions, 5);
   const opusSessions = sessions5h.filter(s => s.model === 'opus');
   const sonnetSessions = sessions5h.filter(s => s.model === 'sonnet');
 
-  const opusUsed = opusSessions.length;
-  const sonnetUsed = sonnetSessions.length;
+  // Count sessions with actual activity (non-zero tokens)
+  const opusActive = opusSessions.filter(s => (s.totalTokens || 0) > 0);
+  const sonnetActive = sonnetSessions.filter(s => (s.totalTokens || 0) > 0);
+  const opusUsed = opusActive.length;
+  const sonnetUsed = sonnetActive.length;
   const opusPct = Math.min(1, opusUsed / OPUS_5H_MAX);
   const sonnetPct = Math.min(1, sonnetUsed / SONNET_5H_MAX);
 
   setGauge('opusArc', 'opusNeedle', 'opusPercent', 'opusSub', opusPct, opusUsed, OPUS_5H_MAX, 'messages');
   setGauge('sonnetArc', 'sonnetNeedle', 'sonnetPercent', 'sonnetSub', sonnetPct, sonnetUsed, SONNET_5H_MAX, 'messages');
 
-  // Stats
-  const totalInput = sessions5h.reduce((s, x) => s + (x.inputTokens || 0), 0);
+  // Stats — use all sessions (not just 5h) for totals, but label says 5hr
+  const totalInput = sessions5h.reduce((s, x) => s + (x.inputTokens || 0) + (x.cachedTokens || 0), 0);
   const totalOutput = sessions5h.reduce((s, x) => s + (x.outputTokens || 0), 0);
   const totalCached = sessions5h.reduce((s, x) => s + (x.cachedTokens || 0), 0);
 
@@ -881,11 +885,19 @@ function updateTokenStats() {
   document.getElementById('statOutput').textContent = formatTokens(totalOutput);
   document.getElementById('statCached').textContent = formatTokens(totalCached);
 
-  // Window bars
-  buildWindowBars(usageData.sessions);
+  // Window bars — use totalTokens for bar height
+  buildWindowBars(allSessions);
 
   // Weekly chart
-  buildWeeklyChart(usageData.dailyTotals);
+  buildWeeklyChart(usageData.dailyTotals || []);
+
+  // Data freshness indicator
+  if (usageData.generatedAt) {
+    const age = Date.now() - new Date(usageData.generatedAt).getTime();
+    const ageMin = Math.round(age / 60000);
+    const freshLabel = ageMin < 2 ? 'just now' : ageMin < 60 ? ageMin + 'm ago' : Math.round(ageMin/60) + 'h ago';
+    document.querySelector('.token-header .sub').textContent = `Claude Max x20 · data from ${freshLabel}`;
+  }
 
   // Reset countdown — time until oldest session in window ages out
   if (sessions5h.length > 0) {

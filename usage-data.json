@@ -1,8 +1,179 @@
-{
-  "sessions": [
-    {"ts": "2026-03-29T00:00:00Z", "model": "opus", "inputTokens": 0, "outputTokens": 0, "cachedTokens": 0, "durationMs": 0}
-  ],
-  "dailyTotals": [
-    {"date": "2026-03-28", "opus": {"input": 150000, "output": 15000}, "sonnet": {"input": 0, "output": 0}}
-  ]
+﻿{
+    "dailyTotals":  [
+                        {
+                            "date":  "2026-03-29",
+                            "opus":  {
+                                         "output":  1493,
+                                         "input":  10
+                                     },
+                            "sonnet":  {
+                                           "output":  635,
+                                           "input":  39296
+                                       }
+                        },
+                        {
+                            "date":  "2026-03-30",
+                            "opus":  {
+                                         "output":  14726,
+                                         "input":  813644
+                                     },
+                            "sonnet":  {
+                                           "input":  0,
+                                           "output":  0
+                                       }
+                        }
+                    ],
+    "generatedAt":  "2026-03-30T19:17:05.7392256Z",
+    "sessions":  [
+                     {
+                         "cachedTokens":  142223,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  71,
+                         "outputTokens":  674,
+                         "inputTokens":  5,
+                         "ts":  "2026-03-30T19:16:49.0630000+00:00",
+                         "totalTokens":  142680
+                     },
+                     {
+                         "cachedTokens":  0,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  0,
+                         "outputTokens":  0,
+                         "inputTokens":  0,
+                         "ts":  "2026-03-30T19:15:30.5610000+00:00",
+                         "totalTokens":  0
+                     },
+                     {
+                         "cachedTokens":  88387,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  9,
+                         "outputTokens":  855,
+                         "inputTokens":  8,
+                         "ts":  "2026-03-30T19:13:31.4150000+00:00",
+                         "totalTokens":  18509
+                     },
+                     {
+                         "cachedTokens":  44876,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  0,
+                         "outputTokens":  2269,
+                         "inputTokens":  7,
+                         "ts":  "2026-03-30T19:08:19.7810000+00:00",
+                         "totalTokens":  0
+                     },
+                     {
+                         "cachedTokens":  135117,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  48,
+                         "outputTokens":  2111,
+                         "inputTokens":  6,
+                         "ts":  "2026-03-30T18:00:00.0160000+00:00",
+                         "totalTokens":  95543
+                     },
+                     {
+                         "cachedTokens":  19857,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  20,
+                         "outputTokens":  236,
+                         "inputTokens":  4,
+                         "ts":  "2026-03-30T17:11:31.1650000+00:00",
+                         "totalTokens":  39975
+                     },
+                     {
+                         "cachedTokens":  47746,
+                         "model":  "opus",
+                         "agentId":  "main",
+                         "percentUsed":  14,
+                         "outputTokens":  1155,
+                         "inputTokens":  5,
+                         "ts":  "2026-03-30T14:00:00.0270000+00:00",
+                         "totalTokens":  27858
+                     },
+                     {
+                         "cachedTokens":  42379,
+                         "model":  "opus",
+                         "agentId":  "personal-trainer",
+                         "percentUsed":  22,
+                         "outputTokens":  1123,
+                         "inputTokens":  10,
+                         "ts":  "2026-03-30T19:04:49.5630000+00:00",
+                         "totalTokens":  44412
+                     },
+                     {
+                         "cachedTokens":  17490,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  21,
+                         "outputTokens":  7,
+                         "inputTokens":  3,
+                         "ts":  "2026-03-30T19:10:16.2220000+00:00",
+                         "totalTokens":  41311
+                     },
+                     {
+                         "cachedTokens":  33444,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  11,
+                         "outputTokens":  1131,
+                         "inputTokens":  5,
+                         "ts":  "2026-03-30T19:03:26.0500000+00:00",
+                         "totalTokens":  21421
+                     },
+                     {
+                         "cachedTokens":  15429,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  14,
+                         "outputTokens":  1377,
+                         "inputTokens":  4,
+                         "ts":  "2026-03-30T18:52:23.1950000+00:00",
+                         "totalTokens":  28670
+                     },
+                     {
+                         "cachedTokens":  179636,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  14,
+                         "outputTokens":  2051,
+                         "inputTokens":  10,
+                         "ts":  "2026-03-30T14:30:00.0290000+00:00",
+                         "totalTokens":  28544
+                     },
+                     {
+                         "cachedTokens":  46988,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  14,
+                         "outputTokens":  1737,
+                         "inputTokens":  5,
+                         "ts":  "2026-03-30T04:00:00.2730000+00:00",
+                         "totalTokens":  28790
+                     },
+                     {
+                         "cachedTokens":  0,
+                         "model":  "opus",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  4,
+                         "outputTokens":  1493,
+                         "inputTokens":  10,
+                         "ts":  "2026-03-29T17:46:46.8200000+00:00",
+                         "totalTokens":  7589
+                     },
+                     {
+                         "cachedTokens":  39289,
+                         "model":  "sonnet",
+                         "agentId":  "virtual-assistant",
+                         "percentUsed":  1,
+                         "outputTokens":  635,
+                         "inputTokens":  7,
+                         "ts":  "2026-03-29T05:05:31.5650000+00:00",
+                         "totalTokens":  11973
+                     }
+                 ]
 }
