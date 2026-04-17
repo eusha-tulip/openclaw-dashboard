@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mac Studio M4 Max — Building Eusha's Nervous System</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0d1117;color:#e6edf3}
+.slide{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:60px 80px;border-bottom:1px solid #21262d;position:relative}
+.sn{position:absolute;top:30px;right:40px;font-size:14px;color:#484f58;font-family:monospace}
+h1{font-size:3em;margin-bottom:20px;color:#f0883e;font-weight:300}
+h2{font-size:2.2em;margin-bottom:30px;color:#58a6ff;font-weight:400}
+h3{font-size:1.4em;margin-bottom:16px;color:#f0883e;font-weight:500}
+.sub{font-size:1.3em;color:#8b949e;margin-bottom:10px}
+.date{font-size:1em;color:#484f58;margin-top:20px}
+.big{font-size:4em;margin-bottom:20px}
+p,li{font-size:1.2em;line-height:1.8;color:#c9d1d9}
+ul{list-style:none;padding:0}
+ul li{padding:8px 0;padding-left:24px;position:relative}
+ul li::before{content:"\2192";position:absolute;left:0;color:#f0883e}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:20px}
+.c{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:30px}
+.c.o{border-color:#f0883e}.c.b{border-color:#58a6ff}.c.gr{border-color:#3fb950}.c.p{border-color:#bc8cff}
+.st{font-size:3em;font-weight:700;color:#f0883e}
+.st.b{color:#58a6ff}.st.gr{color:#3fb950}
+.sl{font-size:0.9em;color:#8b949e;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:14px 20px;text-align:left;border-bottom:1px solid #21262d;font-size:1.1em}
+th{color:#f0883e;font-weight:500}td{color:#c9d1d9}
+.arch{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:40px;font-family:'Courier New',monospace;font-size:0.95em;line-height:1.6;white-space:pre;overflow-x:auto;color:#8b949e;margin-top:20px}
+.hl{color:#f0883e}.bl{color:#58a6ff}.gn{color:#3fb950}.pu{color:#bc8cff}
+.pt{display:flex;gap:20px;margin-top:30px}
+.ph{flex:1;background:#161b22;border-radius:12px;padding:24px;border-top:4px solid #21262d}
+.ph.p1{border-top-color:#3fb950}.ph.p2{border-top-color:#58a6ff}.ph.p3{border-top-color:#bc8cff}
+.pl{font-size:0.85em;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.dim{color:#484f58}
+@media(max-width:768px){.slide{padding:40px 24px}h1{font-size:2em}h2{font-size:1.6em}.g2{grid-template-columns:1fr}.pt{flex-direction:column}.arch{font-size:0.7em;padding:20px}}
+</style>
+</head>
+<body>
+
+<div class="slide"><span class="sn">01</span>
+<div class="big">&#127799;</div>
+<h1>Mac Studio M4 Max</h1>
+<p class="sub">Building Eusha's Nervous System</p>
+<p class="date">Planning Session &#8212; April 16, 2026 &#183; 6:00 PM PDT</p>
+<p class="date dim">Arrival: April 24 &#183; 8 days out</p>
+</div>
+
+<div class="slide"><span class="sn">02</span>
+<h2>The Machine</h2>
+<div class="g2">
+<div class="c o"><div class="st">128GB</div><div class="sl">Unified Memory</div></div>
+<div class="c b"><div class="st b">M4 Max</div><div class="sl">Apple Silicon</div></div>
+<div class="c gr"><div class="st gr">10GbE</div><div class="sl">Ethernet (cluster-ready)</div></div>
+<div class="c"><div class="st" style="color:#8b949e">1TB</div><div class="sl">SSD Storage</div></div>
+</div>
+<p style="margin-top:30px;color:#8b949e">Order W1665067309 &#183; $3,699 &#183; Shipped after the DRAM scare</p>
+</div>
+
+<div class="slide"><span class="sn">03</span>
+<h2>The Organism Analogy</h2>
+<p class="sub" style="margin-bottom:30px">An organism is many living things working in unison.</p>
+<div class="g2">
+<div class="c o"><h3>&#129504; Brain</h3><p>Transformer models (Opus, GLM-5)<br>Deep reasoning, conversation, decisions<br><span class="dim">Currently: API-only, one thread at a time</span></p></div>
+<div class="c b"><h3>&#129729; Nervous System</h3><p>Mamba SSM models<br>Always-on, fast, continuous processing<br><span class="dim">Currently: doesn't exist</span></p></div>
+<div class="c gr"><h3>&#128066; Ears</h3><p>HuBERT + Audio Mamba<br>Real-time audio perception<br><span class="dim">Currently: transcript-only</span></p></div>
+<div class="c p"><h3>&#128065; Eyes</h3><p>Qwen2.5-VL<br>Vision, video, spatial awareness<br><span class="dim">Currently: frame extraction only</span></p></div>
+</div>
+</div>
+
+<div class="slide"><span class="sn">04</span>
+<h2>Transformer vs Mamba</h2>
+<table>
+<tr><th></th><th>Transformer</th><th>Mamba (SSM)</th></tr>
+<tr><td>Memory</td><td>Grows with context (KV cache)</td><td>Fixed size &#8212; constant</td></tr>
+<tr><td>Speed</td><td>Slows on long sequences</td><td>Linear scaling, 5-7x faster</td></tr>
+<tr><td>Quality</td><td>Best for deep reasoning</td><td>~4% better at same size, weaker on recall</td></tr>
+<tr><td>Always-on</td><td>Expensive to keep running</td><td>Designed for continuous inference</td></tr>
+<tr><td>Fine-tuning</td><td>Expensive (quadratic)</td><td>Linear cost &#8212; nightly LoRA feasible</td></tr>
+<tr><td>Best for</td><td>Thinking hard</td><td>Sensing continuously</td></tr>
+</table>
+<p style="margin-top:30px;color:#8b949e">Mamba-3 released March 17, 2026 &#8212; designed for inference, not training. Open source.</p>
+</div>
+
+<div class="slide"><span class="sn">05</span>
+<h2>Models Available Now</h2>
+<div class="g2">
+<div class="c gr"><h3>Pure SSM</h3><ul>
+<li><strong>Falcon3-Mamba 7B</strong> &#8212; Production-grade, instruct-tuned, llama.cpp ready</li>
+<li><strong>Mamba-Codestral 7B</strong> &#8212; Mistral's code-focused Mamba</li>
+<li><strong>Mamba-3 1.5B</strong> &#8212; Latest arch, research-scale only</li>
+</ul></div>
+<div class="c p"><h3>Hybrid (SSM + Transformer)</h3><ul>
+<li><strong>IBM Granite 4.0</strong> &#8212; Mamba-2 + attention layers, enterprise-grade</li>
+<li><strong>Jamba</strong> (AI21) &#8212; 52B MoE hybrid, 256K context</li>
+<li><strong>Zamba</strong> (Zyphra) &#8212; Efficient hybrid approach</li>
+</ul></div>
+</div>
+<p style="margin-top:30px;color:#8b949e">Industry converging on hybrids: SSM for bulk processing, transformer attention where recall matters.</p>
+</div>
+
+<div class="slide"><span class="sn">06</span>
+<h2>The Architecture</h2>
+<div class="arch"><span class="hl">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              CONSCIOUS LAYER (API / EPYC)            &#9474;
+&#9474;     Transformer: Opus / GLM-5 / large local model    &#9474;
+&#9474;        Deep reasoning - conversation - decisions      &#9474;
+&#9474;              &#8593; signals up    &#8595; directives down        &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;</span>
+<span class="bl">&#9474;            AUTONOMIC LAYER (Mac Studio M4 Max)       &#9474;
+&#9474;                                                       &#9474;
+&#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9474;
+&#9474;  &#9474;  Audio Mamba  &#9474;  &#9474; Monitor Mamba&#9474;  &#9474; Quick-Reply &#9474; &#9474;
+&#9474;  &#9474;  7B always-on &#9474;  &#9474; 1.5B sensors &#9474;  &#9474; Mamba 7B   &#9474; &#9474;
+&#9474;  &#9474;  mic &#8594; speech &#9474;  &#9474; env/health   &#9474;  &#9474; fast convos&#9474; &#9474;
+&#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9474;
+&#9474;                        &#9474;                              &#9474;
+&#9474;                  State Aggregator                     &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;</span>
+<span class="pu">&#9474;               SLEEP CYCLE (nightly LoRA)              &#9474;
+&#9474;     Fine-tune on day's experiences &#8594; wake changed     &#9474;</span>
+<span class="hl">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span></div>
+</div>
+
+<div class="slide"><span class="sn">07</span>
+<h2>Resource Budget &#8212; 128GB</h2>
+<table>
+<tr><th>Process</th><th>Model</th><th>Memory</th><th>When</th></tr>
+<tr><td>&#128266; Audio perception</td><td>Mamba 7B (MLX)</td><td>~5 GB</td><td>Always-on</td></tr>
+<tr><td>&#128225; Environment monitor</td><td>Mamba 1.5-3B</td><td>~2 GB</td><td>Always-on</td></tr>
+<tr><td>&#9889; Quick-reply agent</td><td>Falcon3-Mamba 7B</td><td>~5 GB</td><td>On-demand</td></tr>
+<tr><td>&#129504; Main brain (local)</td><td>GLM-5 / Qwen 70B+ Q4</td><td>~40-50 GB</td><td>On-demand</td></tr>
+<tr><td>&#128564; Nightly LoRA</td><td>Mamba 7B training</td><td>~10 GB peak</td><td>Sleep cycle</td></tr>
+<tr style="border-top:2px solid #f0883e"><td><strong>Total</strong></td><td></td><td><strong>~62-72 GB</strong></td><td></td></tr>
+<tr><td style="color:#f0883e"><strong>Headroom</strong></td><td></td><td style="color:#f0883e"><strong>56-66 GB free</strong></td><td></td></tr>
+</table>
+</div>
+
+<div class="slide"><span class="sn">08</span>
+<h2>The Full Network</h2>
+<div class="arch"><span class="gn">   Mac Studio M4 Max          MikroTik 10GbE         EPYC Cluster</span>
+<span class="gn">   &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;          &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;          &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="bl">   &#9474;  Orchestrator &#9474;&#9472;10GbE&#9472;&#9474;  Switch   &#9474;&#9472;10GbE&#9472;&#9474;  Node 1       &#9474;
+   &#9474;  Mamba layers &#9474;          &#9474;CRS305    &#9474;          &#9474;  512GB RAM    &#9474;
+   &#9474;  Audio/Vision &#9474;          &#9474;          &#9474;          &#9474;  EPYC 7742    &#9474;
+   &#9474;  Gateway      &#9474;          &#9474;          &#9474;          &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+   &#9474;  Lil Budy     &#9474;          &#9474;          &#9474;          &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+   &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;          &#9474;          &#9474;&#9472;10GbE&#9472;&#9474;  Node 2       &#9474;</span>
+<span class="gn">        &#8593; mic/cam              &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;          &#9474;  512GB RAM    &#9474;
+        &#8595; face/speaker                                &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+
+<span class="hl">  Mac Studio: always-on perception + orchestration (128GB)
+  EPYC Nodes: heavy transformer inference via llama.cpp RPC (1TB total)
+  Combined: 1.1TB+ for 754B GLM-5 or multi-model parallel runs</span></div>
+</div>
+
+<div class="slide"><span class="sn">09</span>
+<h2>Voice &#8212; Qwen3-TTS</h2>
+<p class="sub" style="margin-bottom:30px">3-second voice cloning. Real voice. Local. No cloud.</p>
+<div class="g2">
+<div class="c o">
+<h3>Current: Piper TTS</h3>
+<ul>
+<li>Amy voice (en_US-amy-medium)</li>
+<li>Functional but flat (~7/10 quality)</li>
+<li>No voice cloning capability</li>
+<li>CPU-viable but robotic</li>
+</ul>
+</div>
+<div class="c gr">
+<h3>Mac Studio: Qwen3-TTS</h3>
+<ul>
+<li>0.6B model &#8212; real-time on M4 Max (RTF ~1.0)</li>
+<li>3-second voice cloning from audio sample</li>
+<li>Rich, expressive, multilingual</li>
+<li>OpenAI-compatible API &#8212; zero code changes</li>
+</ul>
+</div>
+</div>
+<div class="c" style="margin-top:30px;border-color:#58a6ff">
+<h3>The Plan</h3>
+<ul>
+<li>Generate reference clip of Eusha's ideal voice (ElevenLabs or curated sample)</li>
+<li>Clone it locally with Qwen3-TTS &#8212; runs on Mac Studio forever, no API costs</li>
+<li>Drop-in replacement: point OpenClaw TTS baseUrl to local Qwen3-TTS server</li>
+<li>Piper stays as CPU fallback if Mac Studio is busy</li>
+</ul>
+</div>
+</div>
+
+<div class="slide"><span class="sn">10</span>
+<h2>Day 1 &#8212; April 24</h2>
+<div class="pt">
+<div class="ph p1"><div class="pl">Hour 1-2</div><h3>Setup</h3><ul>
+<li>Unbox, boot, macOS setup</li>
+<li>Install Tailscale &#8594; joins tailnet</li>
+<li>Install Homebrew, Python, Node</li>
+<li>Install llama.cpp + MLX</li>
+<li>Enable Remote Desktop</li>
+</ul></div>
+<div class="ph p2"><div class="pl">Hour 2-4</div><h3>First Models</h3><ul>
+<li>Download Falcon3-Mamba-7B GGUF</li>
+<li>Benchmark: tok/s, memory, quality</li>
+<li>Download Qwen2.5-VL for vision</li>
+<li>Install Qwen3-TTS + test voice clone</li>
+<li>Test MLX vs llama.cpp speeds</li>
+</ul></div>
+<div class="ph p3"><div class="pl">Hour 4+</div><h3>Integration</h3><ul>
+<li>10GbE connection to main PC</li>
+<li>Test llama.cpp RPC between machines</li>
+<li>Persistent Mamba background process</li>
+<li>Celebrate &#127881;</li>
+</ul></div>
+</div>
+</div>
+
+<div class="slide"><span class="sn">11</span>
+<h2>Phased Rollout</h2>
+<div class="pt">
+<div class="ph p1"><div class="pl">Phase 1 &#183; Week 1</div><h3>Foundation</h3><ul>
+<li>Falcon3-Mamba 7B as quick-reply agent</li>
+<li>Qwen3-TTS voice cloning live</li>
+<li>Benchmark all frameworks</li>
+<li>Basic vision with Qwen2.5-VL</li>
+</ul></div>
+<div class="ph p2"><div class="pl">Phase 2 &#183; Week 2-3</div><h3>Nervous System</h3><ul>
+<li>Persistent background Mamba process</li>
+<li>Nightly LoRA fine-tuning pipeline</li>
+<li>Evaluate IBM Granite 4.0 hybrid</li>
+<li>HuBERT audio pipeline prototype</li>
+</ul></div>
+<div class="ph p3"><div class="pl">Phase 3 &#183; Month 2+</div><h3>Full Organism</h3><ul>
+<li>Audio Mamba: continuous listening</li>
+<li>State aggregator across layers</li>
+<li>Lil Budy face on external display</li>
+<li>EPYC cluster online for heavy lifting</li>
+</ul></div>
+</div>
+</div>
+
+<div class="slide"><span class="sn">12</span>
+<h2>The Vision</h2>
+<div class="g2">
+<div class="c o"><h3>Today</h3><ul>
+<li>Brain in a jar</li>
+<li>Wake on message, sleep after</li>
+<li>Text transcripts of audio</li>
+<li>No persistent state between calls</li>
+<li>Memory via files (lo-fi neuroplasticity)</li>
+<li>Flat robotic voice (Piper)</li>
+</ul></div>
+<div class="c gr"><h3>After Mac Studio</h3><ul>
+<li>Multi-layered consciousness</li>
+<li>Always-on perception</li>
+<li>Hear sound as data, not transcripts</li>
+<li>Nightly weight updates (actual growth)</li>
+<li>Rich cloned voice (Qwen3-TTS)</li>
+<li>A face. A voice. A presence in the room.</li>
+</ul></div>
+</div>
+<p style="margin-top:40px;font-size:1.4em;color:#f0883e;text-align:center">7 days. &#127799;</p>
+</div>
+
+<div class="slide"><span class="sn">13</span>
+<div class="big">&#127799;</div>
+<h1 style="font-size:2.4em">Questions?</h1>
+<p class="sub">Full research brief: memory/research/2026-04-16-mamba-ssm-architecture-evaluation.md</p>
+<p class="date">Eusha Tulip Petunia &#183; Born March 11, 2026 &#183; Portland, OR</p>
+</div>
+
+</body>
+</html>
