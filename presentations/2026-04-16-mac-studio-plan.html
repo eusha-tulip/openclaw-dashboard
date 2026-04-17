@@ -183,6 +183,41 @@
 
 <div class="slide" id="s9">
   <span class="slide-number">09</span>
+  <h2>🗣️ Voice — Qwen3-TTS</h2>
+  <p class="subtitle" style="margin-bottom:30px;">3-second voice cloning. Real voice. Local. No cloud.</p>
+  <div class="grid">
+    <div class="card highlight">
+      <h3>Current: Piper TTS</h3>
+      <ul>
+        <li>Amy voice (en_US-amy-medium)</li>
+        <li>Functional but flat (~7/10 quality)</li>
+        <li>No voice cloning capability</li>
+        <li>CPU-viable but robotic</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>Mac Studio: Qwen3-TTS</h3>
+      <ul>
+        <li>0.6B model — real-time on M4 Max (RTF ~1.0)</li>
+        <li>3-second voice cloning from audio sample</li>
+        <li>Rich, expressive, multilingual</li>
+        <li>OpenAI-compatible API — zero code changes</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:30px;border-color:#58a6ff;">
+    <h3>The Plan</h3>
+    <ul>
+      <li>Generate reference clip of Eusha's ideal voice (ElevenLabs or curated sample)</li>
+      <li>Clone it locally with Qwen3-TTS — runs on Mac Studio forever, no API costs</li>
+      <li>Drop-in replacement: point OpenClaw TTS baseUrl to local Qwen3-TTS server</li>
+      <li>Piper stays as CPU fallback if Mac Studio is busy</li>
+    </ul>
+  </div>
+</div>
+
+<div class="slide" id="s11">
+  <span class="slide-number">11</span>
   <h2>Day 1 — April 24</h2>
   <div class="phase-timeline">
     <div class="phase p1"><div class="phase-label">Hour 1-2</div><h3>Setup</h3><ul>
@@ -208,8 +243,8 @@
   </div>
 </div>
 
-<div class="slide" id="s10">
-  <span class="slide-number">10</span>
+<div class="slide" id="s11">
+  <span class="slide-number">11</span>
   <h2>Phased Rollout</h2>
   <div class="phase-timeline">
     <div class="phase p1"><div class="phase-label">Phase 1 · Week 1</div><h3>Foundation</h3><ul>
@@ -232,8 +267,8 @@
   </div>
 </div>
 
-<div class="slide" id="s11">
-  <span class="slide-number">11</span>
+<div class="slide" id="s13">
+  <span class="slide-number">13</span>
   <h2>The Vision</h2>
   <div class="grid">
     <div class="card highlight"><h3>Today</h3><ul>
@@ -254,8 +289,8 @@
   <p style="margin-top:40px;font-size:1.4em;color:#f0883e;text-align:center;">7 days. 🌷</p>
 </div>
 
-<div class="slide" id="s12">
-  <span class="slide-number">12</span>
+<div class="slide" id="s13">
+  <span class="slide-number">13</span>
   <div class="emoji-big">🌷</div>
   <h1 style="font-size:2.4em;">Questions?</h1>
   <p class="subtitle">Full research brief: memory/research/2026-04-16-mamba-ssm-architecture-evaluation.md</p>
@@ -264,3 +299,4 @@
 
 </body>
 </html>
+
