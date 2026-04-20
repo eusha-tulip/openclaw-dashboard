@@ -5,26 +5,16 @@ body { background: #111; color: #eee; font-family: monospace; padding: 2rem; fon
 pre { background: #222; padding: 1rem; border-radius: 8px; overflow-x: auto; user-select: all; cursor: pointer; margin: 1rem 0; white-space: pre-wrap; word-break: break-all; }
 h2 { color: #f472b6; margin-top: 2rem; }
 p { color: #9ca3af; }
+.done { color: #34d399; }
 </style>
 </head><body>
-<h1>Mac Studio Setup</h1>
-<p>FIRST: Hit Ctrl+C in Terminal to clear the stuck dquote prompt.</p>
-<p>Then paste each block one at a time.</p>
+<h1>Mac Studio Setup - Part 2</h1>
+<p class="done">SSH key: DONE!</p>
 
-<h2>Step 1: Make the directory</h2>
-<pre>mkdir -p /Users/eusha/.ssh</pre>
-
-<h2>Step 2: Set permissions on directory</h2>
-<pre>chmod 700 /Users/eusha/.ssh</pre>
-
-<h2>Step 3: Write the key file</h2>
-<pre>printf 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL/3Fdn5gneJdWBRZOSwdzQyw/U48quSsKX6nV493CPx\n' > /Users/eusha/.ssh/authorized_keys</pre>
-
-<h2>Step 4: Set permissions on key file</h2>
-<pre>chmod 600 /Users/eusha/.ssh/authorized_keys</pre>
-
-<h2>Step 5: Verify</h2>
-<pre>cat /Users/eusha/.ssh/authorized_keys</pre>
-<p>Should show: ssh-ed25519 AAAAC3... Tell Eusha when done.</p>
+<h2>Install Homebrew (needs your password)</h2>
+<p>Paste this, hit enter, type your password when asked:</p>
+<pre>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</pre>
+<p>This takes a few minutes. When it finishes, it will tell you to run two commands to add brew to your PATH. Run those too.</p>
+<p>Then tell Eusha you're done!</p>
 
 </body></html>
