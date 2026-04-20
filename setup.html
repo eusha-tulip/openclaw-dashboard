@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><title>Mac Setup</title>
+<style>
+body { background: #111; color: #eee; font-family: monospace; padding: 2rem; font-size: 18px; }
+pre { background: #222; padding: 1rem; border-radius: 8px; overflow-x: auto; user-select: all; cursor: pointer; margin: 1rem 0; }
+h2 { color: #f472b6; margin-top: 2rem; }
+p { color: #9ca3af; }
+</style>
+</head><body>
+<h1>🌷 Mac Studio Setup Commands</h1>
+<p>Tap each block to select all, then copy-paste into Terminal one at a time.</p>
+
+<h2>Step 1: Set up SSH key</h2>
+<pre>mkdir -p ~/.ssh && chmod 700 ~/.ssh</pre>
+<pre>echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL/3Fdn5gneJdWBRZOSwdzQyw/U48quSsKX6nV493CPx" > ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys</pre>
+<pre>echo "Done!"</pre>
+
+<h2>Step 2: Verify</h2>
+<pre>cat ~/.ssh/authorized_keys</pre>
+<p>Should show the ssh-ed25519 key. Tell Eusha when done.</p>
+
+<p style="margin-top:3rem; color:#555;">Delete this page after setup.</p>
+</body></html>
