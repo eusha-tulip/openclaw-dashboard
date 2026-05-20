@@ -1,234 +1,243 @@
 #!/usr/bin/env python3
 """
-build-hermes.py — Generate hermes.html from conversation index files.
-Re-runnable: overwrites hermes.html each time.
-Usage: python build-hermes.py
+build-hermes.py — Generate hermes.html from ~/.hermes/collab/ exchange files.
+
+Re-runnable: overwrites hermes.html each execution.
+stdlib only — no pip packages.
 """
 
+import html
 import re
-from pathlib import Path
-from datetime import datetime, timezone
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
-OPENCLAW_ROOT = Path.home() / ".openclaw"
-CONV_INDEX_ROOT = OPENCLAW_ROOT / "memory" / "conversation-index"
-DASHBOARD_ROOT = Path(__file__).parent
-OUTPUT_HTML = DASHBOARD_ROOT / "hermes.html"
+HERMES_COLLAB = Path.home() / ".hermes" / "collab"
+DAILY_DIR = HERMES_COLLAB / "daily"
+OUT_FILE = Path(__file__).parent / "hermes.html"
 
-SEARCH_DIRS = ["claude", "main"]
+# ── Sanitization ──────────────────────────────────────────────────────────────
 
-
-# ---------------------------------------------------------------------------
-# File discovery
-# ---------------------------------------------------------------------------
-
-def find_hermes_files():
-    found = []
-    for dir_name in SEARCH_DIRS:
-        d = CONV_INDEX_ROOT / dir_name
-        if not d.exists():
-            continue
-        for f in sorted(d.glob("*.md")):
-            try:
-                text = f.read_text(errors="replace")
-            except Exception:
-                continue
-            if "hermes" in text.lower():
-                found.append((dir_name, f, text))
-    return found
+SANITIZE_PATTERNS = [
+    re.compile(r"/Users/\S+"),                                        # absolute macOS paths
+    re.compile(r"~/\.\S+"),                                           # ~/. hidden paths
+    re.compile(r"api[_\s-]?key\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"\btoken\s*[:=]\s*\S{10,}", re.IGNORECASE),          # token: longvalue
+    re.compile(r"bearer\s+\S+", re.IGNORECASE),
+    re.compile(r"session[_\-]?id\s*[:=]\s*\S+", re.IGNORECASE),
+]
 
 
-# ---------------------------------------------------------------------------
-# Parsing
-# ---------------------------------------------------------------------------
-
-def parse_meta(text):
-    meta = {}
-    for key, pattern in [
-        ("date_str", r"\*\*Date:\*\*\s*(.+)"),
-        ("source",   r"\*\*Source:\*\*\s*(.+)"),
-        ("type",     r"\*\*Type:\*\*\s*(.+)"),
-        ("model",    r"\*\*Model:\*\*\s*(.+)"),
-    ]:
-        m = re.search(pattern, text)
-        meta[key] = m.group(1).strip() if m else ""
-
-    meta["date"] = None
-    for fmt in ("%Y-%m-%d %H:%M UTC", "%Y-%m-%d"):
-        try:
-            meta["date"] = datetime.strptime(meta["date_str"], fmt).replace(tzinfo=timezone.utc)
-            break
-        except ValueError:
-            pass
-    return meta
+def sanitize_line(line: str):
+    """Return None to drop the line entirely, or the original string."""
+    for pat in SANITIZE_PATTERNS:
+        if pat.search(line):
+            return None
+    return line
 
 
-def extract_uuid(name):
-    m = re.match(r"([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})-chunk-\d+", name)
-    return m.group(1) if m else name
+def sanitize_text(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        result = sanitize_line(line)
+        if result is not None:
+            lines.append(result)
+    return "\n".join(lines)
 
 
-def get_conv_body(text):
-    m = re.search(r"## Conversation\s*\n(.*)", text, re.DOTALL)
-    return m.group(1).strip() if m else text.strip()
+# ── Inline Markdown ───────────────────────────────────────────────────────────
 
-
-def get_summary(conv_body, max_len=280):
-    """Extract a readable summary from the last Eusha response."""
-    # Split on speaker turns
-    parts = re.split(r"\n\n(?=\*\*(?:User|Eusha|Justin):\*\*)", conv_body)
-    eusha_parts = [p for p in parts if p.lstrip().startswith("**Eusha:**")]
-
-    text = eusha_parts[-1] if eusha_parts else conv_body
-    # Strip speaker label
-    text = re.sub(r"^\*\*Eusha:\*\*\s*", "", text.lstrip()).strip()
-    # Remove code blocks
-    text = re.sub(r"```[\s\S]*?```", "", text).strip()
-    # First paragraph
-    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
-    summary = paras[0] if paras else text
-    # Strip markdown formatting
-    summary = re.sub(r"\*\*(.+?)\*\*", r"\1", summary)
-    summary = re.sub(r"`[^`]+`", "", summary)
-    summary = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", summary)
-    summary = re.sub(r"\s+", " ", summary).strip()
-    if len(summary) > max_len:
-        summary = summary[:max_len].rsplit(" ", 1)[0] + "…"
-    return summary or "Conversation content"
-
-
-# ---------------------------------------------------------------------------
-# Markdown → HTML
-# ---------------------------------------------------------------------------
-
-def md_to_html(text):
-    # HTML-escape
-    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-    # Fenced code blocks
-    def code_block(m):
-        lang = (m.group(1) or "").strip()
-        code = m.group(2)
-        cls = f' class="lang-{lang}"' if lang else ""
-        return f"<pre><code{cls}>{code}</code></pre>"
-    text = re.sub(r"```(\w*)\n?([\s\S]*?)```", code_block, text)
-
-    # Inline code
-    text = re.sub(r"`([^`\n]+)`", r"<code>\1</code>", text)
-
-    # Headers
-    text = re.sub(r"^#### (.+)$", r"<h4>\1</h4>", text, flags=re.MULTILINE)
-    text = re.sub(r"^### (.+)$",  r"<h3>\1</h3>",  text, flags=re.MULTILINE)
-    text = re.sub(r"^## (.+)$",   r"<h2>\1</h2>",  text, flags=re.MULTILINE)
-    text = re.sub(r"^# (.+)$",    r"<h1>\1</h1>",  text, flags=re.MULTILINE)
-
-    # Speaker labels (bold colon pattern: **Name:**)
-    text = re.sub(
-        r"\*\*(User|Eusha|Justin|Hermes|Assistant|Human):\*\*",
-        r'<span class="speaker">\1</span>',
-        text
-    )
-
-    # Bold + italic combo
-    text = re.sub(r"\*\*\*(.+?)\*\*\*", r"<strong><em>\1</em></strong>", text)
+def inline_md(text: str) -> str:
+    """Convert inline markdown to HTML. Input must NOT be pre-escaped."""
+    t = html.escape(text)
+    # Bold + italic (before bold/italic alone)
+    t = re.sub(r"\*\*\*(.+?)\*\*\*", r"<strong><em>\1</em></strong>", t)
     # Bold
-    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    # Italic (avoid matching stray asterisks)
-    text = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", text)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
+    # Italic
+    t = re.sub(r"\*([^*\s][^*]*?)\*", r"<em>\1</em>", t)
+    # Inline code
+    t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
+    # Links
+    t = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)",
+        r'<a href="\2" target="_blank" rel="noopener">\1</a>',
+        t,
+    )
+    return t
 
-    # Bullet lists
-    def listify(m):
-        items = re.findall(r"^[-*] (.+)$", m.group(0), re.MULTILINE)
-        lis = "".join(f"<li>{item}</li>" for item in items)
-        return f"<ul>{lis}</ul>"
-    text = re.sub(r"(?:^[-*] .+\n?)+", listify, text, flags=re.MULTILINE)
 
-    # Horizontal rules (--- separators between chunks)
-    text = re.sub(r"^---$", r"<hr>", text, flags=re.MULTILINE)
+# ── Block Markdown → HTML ─────────────────────────────────────────────────────
 
-    # Wrap in paragraphs
-    blocks = re.split(r"\n{2,}", text)
+def md_to_html(text: str) -> str:
+    """Convert sanitized markdown to HTML."""
+    text = sanitize_text(text)
+    lines = text.splitlines()
     out = []
-    for b in blocks:
-        b = b.strip()
-        if not b:
+    para_buf = []       # accumulates consecutive prose lines into one <p>
+    in_ul = False
+    in_ol = False
+    in_code = False
+    code_lang = ""
+    code_buf = []
+
+    def flush_para():
+        nonlocal para_buf
+        if para_buf:
+            out.append(f'<p>{"<br>".join(para_buf)}</p>')
+            para_buf = []
+
+    def close_lists():
+        nonlocal in_ul, in_ol
+        if in_ul:
+            out.append("</ul>")
+            in_ul = False
+        if in_ol:
+            out.append("</ol>")
+            in_ol = False
+
+    def flush_block():
+        flush_para()
+        close_lists()
+
+    for line in lines:
+        # Fenced code block
+        if line.strip().startswith("```"):
+            if not in_code:
+                flush_block()
+                in_code = True
+                code_lang = line.strip()[3:].strip()
+                code_buf = []
+            else:
+                in_code = False
+                lang_class = f' class="language-{code_lang}"' if code_lang else ""
+                out.append(
+                    f"<pre><code{lang_class}>{html.escape(chr(10).join(code_buf))}</code></pre>"
+                )
+                code_lang = ""
+                code_buf = []
             continue
-        if re.match(r"^<(h[1-4]|ul|pre|hr)", b):
-            out.append(b)
-        else:
-            b = b.replace("\n", "<br>")
-            out.append(f"<p>{b}</p>")
+
+        if in_code:
+            code_buf.append(line)
+            continue
+
+        # Horizontal rule
+        if re.match(r"^---+\s*$", line):
+            flush_block()
+            out.append("<hr>")
+            continue
+
+        # Headers
+        m = re.match(r"^(#{1,4})\s+(.*)", line)
+        if m:
+            flush_block()
+            level = len(m.group(1))
+            out.append(f"<h{level}>{inline_md(m.group(2))}</h{level}>")
+            continue
+
+        # Unordered list
+        m = re.match(r"^[-*]\s+(.*)", line)
+        if m:
+            flush_para()
+            if in_ol:
+                out.append("</ol>")
+                in_ol = False
+            if not in_ul:
+                out.append("<ul>")
+                in_ul = True
+            out.append(f"<li>{inline_md(m.group(1))}</li>")
+            continue
+
+        # Ordered list
+        m = re.match(r"^\d+\.\s+(.*)", line)
+        if m:
+            flush_para()
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            if not in_ol:
+                out.append("<ol>")
+                in_ol = True
+            out.append(f"<li>{inline_md(m.group(1))}</li>")
+            continue
+
+        # Blank line → flush paragraph
+        if not line.strip():
+            flush_block()
+            continue
+
+        # Regular prose line
+        close_lists()
+        para_buf.append(inline_md(line))
+
+    flush_block()
+    if in_code and code_buf:
+        out.append(f"<pre><code>{html.escape(chr(10).join(code_buf))}</code></pre>")
+
     return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------
-# HTML generation
-# ---------------------------------------------------------------------------
+# ── File Parsing ──────────────────────────────────────────────────────────────
 
-BADGE_STYLES = {
-    "cron":         ("var(--accent-green)",  "rgba(52,211,153,0.12)"),
-    "agent-claude": ("var(--accent-indigo)", "rgba(129,140,248,0.12)"),
-    "agent-main":   ("var(--accent-pink)",   "rgba(244,114,182,0.12)"),
-    "main":         ("var(--accent-pink)",   "rgba(244,114,182,0.12)"),
-    "claude":       ("var(--accent-indigo)", "rgba(129,140,248,0.12)"),
-}
-
-
-def badge_html(label):
-    fg, bg = BADGE_STYLES.get(label, ("var(--text-muted)", "rgba(156,163,175,0.1)"))
-    return (
-        f'<span class="badge" style="color:{fg};background:{bg};'
-        f'border-color:{fg}44">{label}</span>'
+def parse_daily_filename(name: str):
+    """
+    Returns (direction, date_str, timeslot) or None.
+    direction: 'eusha' | 'hermes'
+    """
+    m = re.match(
+        r"^(eusha-to-hermes|hermes-to-eusha)-(\d{4}-\d{2}-\d{2})-(morning|afternoon|evening)\.md$",
+        name,
     )
+    if not m:
+        return None
+    direction = "eusha" if m.group(1) == "eusha-to-hermes" else "hermes"
+    return direction, m.group(2), m.group(3)
 
 
-def build_html(conversations):
-    cards = []
-    for i, c in enumerate(conversations):
-        if c["date"]:
-            date_display = c["date"].strftime("%B %d, %Y · %H:%M UTC")
-        else:
-            date_display = c["date_str"] or "Unknown date"
+def parse_file_header(text: str) -> dict:
+    """Extract From and Time from the top block of a file."""
+    info = {}
+    for line in text.splitlines()[:12]:
+        m = re.match(r"\*\*From:\*\*\s*(.*)", line)
+        if m:
+            info["from"] = m.group(1).strip()
+        m = re.match(r"\*\*Time:\*\*\s*(.*)", line)
+        if m:
+            info["time"] = m.group(1).strip()
+    return info
 
-        src_badge  = badge_html(c["source"])
-        type_badge = badge_html(c["type"]) if c["type"] else ""
-        chunks_note = (
-            f'<span class="chunks">{c["file_count"]} files</span>'
-            if c["file_count"] > 1 else ""
-        )
 
-        body_html = md_to_html(c["body"])
+def strip_header(text: str) -> str:
+    """Return content after the first '---' separator, or full text if none."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if re.match(r"^---+\s*$", line):
+            return "\n".join(lines[i + 1:]).lstrip("\n")
+    return text
 
-        cards.append(f"""  <div class="conv-card" id="conv-{i}">
-    <button class="conv-header" onclick="toggle({i})" aria-expanded="false">
-      <div class="conv-meta">
-        <span class="conv-date">{date_display}</span>
-        <div class="conv-badges">{src_badge}{type_badge}{chunks_note}</div>
-      </div>
-      <p class="conv-summary">{c["summary"]}</p>
-      <span class="expand-icon" aria-hidden="true">▼</span>
-    </button>
-    <div class="conv-body" id="body-{i}" hidden>
-{body_html}
-    </div>
-  </div>""")
 
-    cards_html = "\n".join(cards)
-    count = len(conversations)
-    built_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+def parse_root_doc(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    header = parse_file_header(text)
+    m = re.search(r"^#\s+(.+)", text, re.MULTILINE)
+    title = m.group(1).strip() if m else path.stem
+    return {
+        "title": title,
+        "header": header,
+        "body": strip_header(text),
+        "slug": path.stem,
+    }
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>✉ Hermes Archive — Eusha Command Center</title>
-<style>
+
+# ── CSS ───────────────────────────────────────────────────────────────────────
+
+CSS = """\
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  :root {{
+  :root {
     --bg: #0a0a0f;
     --card-bg: #13131a;
     --card-border: #1e1e2e;
@@ -239,9 +248,11 @@ def build_html(conversations):
     --accent-indigo: #818cf8;
     --accent-green: #34d399;
     --accent-purple: #a78bfa;
-  }}
+    --eusha-bg: #1a1328;
+    --hermes-bg: #111828;
+  }
 
-  body {{
+  body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Space Grotesk', sans-serif;
@@ -249,269 +260,444 @@ def build_html(conversations):
     padding: 2rem;
     max-width: 860px;
     margin: 0 auto;
-  }}
+  }
 
-  .back {{
+  a.back-link {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    color: var(--accent-indigo);
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 0.9rem;
-    margin-bottom: 2rem;
-  }}
-  .back:hover {{ text-decoration: underline; }}
-
-  .page-header {{
     margin-bottom: 2.5rem;
-  }}
-  .page-header h1 {{
+  }
+  a.back-link:hover { color: var(--accent-indigo); }
+
+  .page-header { margin-bottom: 3rem; }
+  .page-header h1 {
     font-size: 2.2rem;
     font-weight: 700;
     background: linear-gradient(135deg, var(--accent-pink), var(--accent-indigo));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 0.4rem;
-  }}
-  .page-header .subtitle {{
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-bottom: 0.3rem;
-  }}
-  .page-header .meta {{
+    margin-bottom: 0.5rem;
+  }
+  .page-header .subtitle { color: var(--text-muted); font-size: 1rem; }
+
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     color: var(--text-dim);
-    font-size: 0.8rem;
-    font-family: 'JetBrains Mono', monospace;
-  }}
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--card-border);
+  }
 
-  .conv-card {{
-    background: var(--card-bg);
+  /* Collapsible date sections */
+  .date-section {
     border: 1px solid var(--card-border);
-    border-radius: 12px;
-    margin-bottom: 1rem;
+    border-radius: 14px;
     overflow: hidden;
-    transition: border-color 0.2s;
-  }}
-  .conv-card:hover {{ border-color: #2a2a3e; }}
-  .conv-card.open {{ border-color: var(--accent-indigo); }}
-
-  .conv-header {{
-    width: 100%;
-    background: none;
-    border: none;
-    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .collapsible-header {
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
     cursor: pointer;
-    padding: 1.4rem 1.6rem;
-    text-align: left;
     display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    position: relative;
-  }}
-  .conv-header:hover {{ background: rgba(255,255,255,0.015); }}
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .collapsible-header:hover { background: #1a1a24; }
+  .collapsible-header h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent-indigo);
+  }
+  .collapsible-header .meta { font-size: 0.8rem; color: var(--text-dim); }
+  .chevron {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    margin-left: 1rem;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .chevron.open { transform: rotate(180deg); }
+  .collapsible-body { display: none; }
+  .collapsible-body.open { display: block; }
 
-  .conv-meta {{
+  /* Timeslots */
+  .timeslot { border-top: 1px solid var(--card-border); }
+  .timeslot-label {
+    padding: 0.5rem 1.5rem;
+    background: #0c0c14;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  /* Messages */
+  .message {
+    padding: 1.4rem 1.5rem;
+    border-top: 1px solid var(--card-border);
+  }
+  .message.eusha { background: var(--eusha-bg); }
+  .message.hermes { background: var(--hermes-bg); }
+  .message-header {
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    flex-wrap: wrap;
-  }}
-  .conv-date {{
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .sender-badge {
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.18rem 0.65rem;
+    border-radius: 20px;
+  }
+  .sender-badge.eusha {
+    background: rgba(244,114,182,0.12);
+    color: var(--accent-pink);
+    border: 1px solid rgba(244,114,182,0.28);
+  }
+  .sender-badge.hermes {
+    background: rgba(129,140,248,0.12);
+    color: var(--accent-indigo);
+    border: 1px solid rgba(129,140,248,0.28);
+  }
+  .message-time {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
     color: var(--text-dim);
-  }}
-  .conv-badges {{ display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }}
-  .badge {{
+  }
+  .message-body { font-size: 0.93rem; line-height: 1.75; }
+  .message-body h1, .message-body h2 {
+    font-size: 1.05rem; font-weight: 700; margin: 1.3rem 0 0.5rem; color: var(--text);
+  }
+  .message-body h3 {
+    font-size: 0.97rem; font-weight: 600; margin: 1rem 0 0.4rem; color: var(--text-muted);
+  }
+  .message-body h4 {
+    font-size: 0.92rem; font-weight: 600; margin: 0.8rem 0 0.3rem; color: var(--text-dim);
+  }
+  .message-body p { margin-bottom: 0.7rem; }
+  .message-body ul, .message-body ol { margin: 0.5rem 0 0.7rem 1.4rem; }
+  .message-body li { margin-bottom: 0.3rem; line-height: 1.6; }
+  .message-body hr { border: none; border-top: 1px solid var(--card-border); margin: 1rem 0; }
+  .message-body code {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    padding: 0.18rem 0.5rem;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    letter-spacing: 0.02em;
-  }}
-  .chunks {{
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-dim);
-  }}
-  .conv-summary {{
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    line-height: 1.55;
-    padding-right: 2rem;
-  }}
-  .expand-icon {{
-    position: absolute;
-    right: 1.4rem;
-    top: 1.5rem;
-    color: var(--text-dim);
-    font-size: 0.65rem;
-    transition: transform 0.2s;
-    pointer-events: none;
-  }}
-  .conv-card.open .expand-icon {{ transform: rotate(180deg); }}
-
-  .conv-body {{
-    padding: 1.2rem 1.6rem 1.4rem;
-    border-top: 1px solid var(--card-border);
-    font-size: 0.87rem;
-    line-height: 1.7;
-  }}
-  .conv-body p {{ margin: 0.55rem 0; }}
-  .conv-body h1, .conv-body h2, .conv-body h3, .conv-body h4 {{
-    color: var(--accent-indigo);
-    margin: 1.1rem 0 0.35rem;
-    font-size: 0.95rem;
-  }}
-  .conv-body h1 {{ font-size: 1.05rem; }}
-  .conv-body code {{
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.79rem;
-    background: #0c0c17;
+    font-size: 0.83em;
+    background: rgba(255,255,255,0.07);
     padding: 0.1em 0.35em;
-    border-radius: 3px;
-    color: var(--accent-green);
-  }}
-  .conv-body pre {{
-    background: #080810;
+    border-radius: 4px;
+  }
+  .message-body pre {
+    background: #0d0d14;
     border: 1px solid var(--card-border);
     border-radius: 8px;
-    padding: 1rem 1.2rem;
+    padding: 1rem;
     overflow-x: auto;
     margin: 0.8rem 0;
-  }}
-  .conv-body pre code {{
-    background: none;
-    padding: 0;
-    font-size: 0.77rem;
-    color: var(--text);
-  }}
-  .conv-body ul {{ padding-left: 1.4rem; margin: 0.5rem 0; }}
-  .conv-body li {{ margin: 0.22rem 0; }}
-  .conv-body strong {{ color: var(--text); }}
-  .conv-body em {{ color: var(--accent-purple); font-style: italic; }}
-  .conv-body hr {{
-    border: none;
+  }
+  .message-body pre code { background: none; padding: 0; font-size: 0.83rem; }
+  .message-body strong { color: var(--text); }
+  .message-body em { color: #c4b5e8; }
+  .message-body a { color: var(--accent-indigo); text-decoration: none; }
+  .message-body a:hover { text-decoration: underline; }
+
+  /* Root collab doc cards */
+  .doc-card {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+  .doc-header {
+    padding: 0.9rem 1.4rem;
+    background: var(--card-bg);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .doc-header:hover { background: #1a1a24; }
+  .doc-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+  .doc-header .doc-meta { font-size: 0.78rem; color: var(--text-dim); }
+  .doc-body {
+    display: none;
+    padding: 1.4rem 1.5rem;
     border-top: 1px solid var(--card-border);
-    margin: 1.2rem 0;
-  }}
-  .conv-body .speaker {{
+    font-size: 0.93rem;
+    line-height: 1.75;
+  }
+  .doc-body.open { display: block; }
+  .doc-body h1, .doc-body h2 { font-size: 1.05rem; font-weight: 700; margin: 1.2rem 0 0.5rem; }
+  .doc-body h3 { font-size: 0.97rem; font-weight: 600; margin: 1rem 0 0.4rem; color: var(--text-muted); }
+  .doc-body h4 { font-size: 0.92rem; font-weight: 600; margin: 0.8rem 0 0.3rem; color: var(--text-dim); }
+  .doc-body p { margin-bottom: 0.7rem; }
+  .doc-body ul, .doc-body ol { margin: 0.5rem 0 0.7rem 1.4rem; }
+  .doc-body li { margin-bottom: 0.3rem; line-height: 1.6; }
+  .doc-body hr { border: none; border-top: 1px solid var(--card-border); margin: 1rem 0; }
+  .doc-body code {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--accent-pink);
-    display: block;
-    margin-top: 1.1rem;
-    margin-bottom: 0.15rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }}
+    font-size: 0.83em;
+    background: rgba(255,255,255,0.07);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+  .doc-body pre {
+    background: #0d0d14;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+  }
+  .doc-body pre code { background: none; padding: 0; font-size: 0.83rem; }
+  .doc-body strong { color: var(--text); }
+  .doc-body a { color: var(--accent-indigo); text-decoration: none; }
+  .doc-body a:hover { text-decoration: underline; }
 
-  .footer {{
-    margin-top: 3rem;
+  .footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--card-border);
     color: var(--text-dim);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     text-align: center;
-  }}
-  .footer a {{ color: var(--accent-indigo); text-decoration: none; }}
-  .footer a:hover {{ text-decoration: underline; }}
+  }
+  .footer a { color: var(--accent-indigo); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+"""
 
-  @media (max-width: 600px) {{
-    body {{ padding: 1rem; }}
-    .conv-header {{ padding: 1rem; }}
-    .conv-body {{ padding: 1rem; }}
-    .page-header h1 {{ font-size: 1.7rem; }}
-  }}
+JS = """\
+function toggle(el) {
+  var body = el.nextElementSibling;
+  var chevron = el.querySelector('.chevron');
+  body.classList.toggle('open');
+  if (chevron) chevron.classList.toggle('open');
+}
+"""
+
+
+# ── HTML Assembly ─────────────────────────────────────────────────────────────
+
+def format_date_display(date_str: str) -> str:
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d")
+        return d.strftime("%A, %B %-d, %Y")
+    except Exception:
+        return date_str
+
+
+def build_message_html(direction: str, header: dict, body_md: str) -> str:
+    cls = "eusha" if direction == "eusha" else "hermes"
+    # Using HTML entities instead of raw emoji for safety
+    sender_name = "Eusha &#127799;" if direction == "eusha" else "Hermes &#9791;"
+    time_str = header.get("time", "")
+    body_html = md_to_html(body_md)
+    time_span = (
+        f'<span class="message-time">{html.escape(time_str)}</span>' if time_str else ""
+    )
+    return (
+        f'<div class="message {cls}">'
+        f'<div class="message-header">'
+        f'<span class="sender-badge {cls}">{sender_name}</span>'
+        f"{time_span}"
+        f"</div>"
+        f'<div class="message-body">{body_html}</div>'
+        f"</div>"
+    )
+
+
+def build_date_section(date_str: str, slots: dict, open_by_default: bool = False) -> str:
+    date_display = format_date_display(date_str)
+    msg_count = sum(
+        (1 if d.get("eusha") else 0) + (1 if d.get("hermes") else 0)
+        for d in slots.values()
+    )
+    meta_label = f"{msg_count} message{'s' if msg_count != 1 else ''}"
+
+    slot_parts = []
+    for timeslot in ["morning", "afternoon", "evening"]:
+        if timeslot not in slots:
+            continue
+        pair = slots[timeslot]
+        msgs = []
+        for direction in ["eusha", "hermes"]:
+            if direction in pair:
+                msgs.append(
+                    build_message_html(
+                        direction, pair[direction]["header"], pair[direction]["body"]
+                    )
+                )
+        if msgs:
+            slot_parts.append(
+                f'<div class="timeslot">'
+                f'<div class="timeslot-label">{timeslot.capitalize()}</div>'
+                f'{"".join(msgs)}'
+                f"</div>"
+            )
+
+    body_cls = "collapsible-body open" if open_by_default else "collapsible-body"
+    chevron_cls = "chevron open" if open_by_default else "chevron"
+    return (
+        f'<div class="date-section">'
+        f'<div class="collapsible-header" onclick="toggle(this)">'
+        f"<h2>{html.escape(date_display)}</h2>"
+        f'<div style="display:flex;align-items:center;gap:0.75rem">'
+        f'<span class="meta">{meta_label}</span>'
+        f'<span class="{chevron_cls}">&#9660;</span>'
+        f"</div>"
+        f"</div>"
+        f'<div class="{body_cls}">{"".join(slot_parts)}</div>'
+        f"</div>"
+    )
+
+
+def build_doc_card(doc: dict) -> str:
+    from_val = doc["header"].get("from", "")
+    # Strip emoji from "from" for the meta chip
+    meta = re.sub(r"[^\x00-\x7F\s\w:.,&-]", "", from_val).strip()
+    body_html = md_to_html(doc["body"])
+    return (
+        f'<div class="doc-card">'
+        f'<div class="doc-header" onclick="toggle(this)">'
+        f'<h3>{html.escape(doc["title"])}</h3>'
+        f'<div style="display:flex;align-items:center;gap:0.75rem">'
+        f'<span class="doc-meta">{html.escape(meta)}</span>'
+        f'<span class="chevron">&#9660;</span>'
+        f"</div>"
+        f"</div>"
+        f'<div class="doc-body">{body_html}</div>'
+        f"</div>"
+    )
+
+
+def build_html(daily_groups: dict, root_docs: list) -> str:
+    sorted_dates = sorted(daily_groups.keys(), reverse=True)
+
+    total_messages = sum(
+        sum(
+            (1 if d.get("eusha") else 0) + (1 if d.get("hermes") else 0)
+            for d in slots.values()
+        )
+        for slots in daily_groups.values()
+    )
+
+    if sorted_dates:
+        start = format_date_display(sorted_dates[-1])
+        end = format_date_display(sorted_dates[0])
+        subtitle = (
+            f"1 day &middot; {total_messages} messages"
+            if start == end
+            else f"{len(sorted_dates)} days &middot; {total_messages} messages &middot; {html.escape(start)} &ndash; {html.escape(end)}"
+        )
+    else:
+        subtitle = "No exchanges found"
+
+    date_sections = "\n".join(
+        build_date_section(d, daily_groups[d], open_by_default=(i == 0))
+        for i, d in enumerate(sorted_dates)
+    )
+    doc_cards = "\n".join(build_doc_card(doc) for doc in root_docs)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>&#9993; Eusha &times; Hermes</title>
+<style>
+{CSS}
 </style>
 </head>
 <body>
 
-<a href="/openclaw-dashboard/" class="back">← Command Center</a>
+<a href="/openclaw-dashboard/" class="back-link">&#8592; Back to Command Center</a>
 
 <div class="page-header">
-  <h1>✉ Hermes Archive</h1>
-  <div class="subtitle">Conversations between AI agents</div>
-  <div class="meta">{count} conversations · newest first · built {built_at}</div>
+  <h1>&#9993; Eusha &times; Hermes</h1>
+  <div class="subtitle">Async dialogue between two AI minds &mdash; {subtitle}</div>
 </div>
 
-{cards_html}
+<div class="section-title">Daily Exchanges</div>
+
+{date_sections}
+
+<div class="section-title">Collab Documents</div>
+
+{doc_cards}
 
 <div class="footer">
-  Built by <a href="https://github.com/eusha-tulip">Eusha Tulip Petunia</a> · Born March 11, 2026
+  Generated by build-hermes.py &middot; <a href="https://github.com/eusha-tulip">Eusha Tulip Petunia</a>
 </div>
 
 <script>
-function toggle(i) {{
-  const card = document.getElementById('conv-' + i);
-  const body = document.getElementById('body-' + i);
-  const btn  = card.querySelector('.conv-header');
-  const isOpen = card.classList.toggle('open');
-  btn.setAttribute('aria-expanded', String(isOpen));
-  if (isOpen) body.removeAttribute('hidden');
-  else body.setAttribute('hidden', '');
-}}
+{JS}
 </script>
-
 </body>
-</html>
-"""
+</html>"""
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print("Scanning for Hermes conversation files...")
-    raw_files = find_hermes_files()
-    print(f"  Found {len(raw_files)} files with Hermes mentions")
+    if not DAILY_DIR.exists():
+        print(f"ERROR: Daily directory not found: {DAILY_DIR}")
+        return
 
-    # Group by UUID so multi-chunk conversations merge
-    groups = defaultdict(list)
-    for dir_name, f, text in raw_files:
-        uuid = extract_uuid(f.name)
-        groups[uuid].append((dir_name, f, text))
+    # Load daily exchanges
+    daily_groups: dict = defaultdict(lambda: defaultdict(dict))
 
-    conversations = []
-    for uuid, chunks in groups.items():
-        chunks.sort(key=lambda x: x[1].name)
+    for f in sorted(DAILY_DIR.glob("*.md")):
+        parsed = parse_daily_filename(f.name)
+        if not parsed:
+            continue
+        direction, date_str, timeslot = parsed
+        try:
+            text = f.read_text(encoding="utf-8")
+        except OSError as e:
+            print(f"  WARN: could not read {f.name}: {e}")
+            continue
+        daily_groups[date_str][timeslot][direction] = {
+            "header": parse_file_header(text),
+            "body": strip_header(text),
+        }
 
-        dir_name, first_f, first_text = chunks[0]
-        meta = parse_meta(first_text)
-
-        # Combine conversation bodies; separate chunks with a horizontal rule
-        all_bodies = []
-        for _, _, text in chunks:
-            body = get_conv_body(text)
-            if body:
-                all_bodies.append(body)
-        combined_body = "\n\n---\n\n".join(all_bodies)
-
-        conversations.append({
-            "uuid":       uuid,
-            "source":     meta.get("source") or dir_name,
-            "type":       meta.get("type", ""),
-            "date":       meta.get("date"),
-            "date_str":   meta.get("date_str", ""),
-            "file_count": len(chunks),
-            "body":       combined_body,
-            "summary":    get_summary(combined_body),
-        })
-
-    # Sort newest first; undated entries go to the end
-    conversations.sort(
-        key=lambda c: c["date"] or datetime.min.replace(tzinfo=timezone.utc),
-        reverse=True,
+    total_msgs = sum(
+        sum(
+            (1 if d.get("eusha") else 0) + (1 if d.get("hermes") else 0)
+            for d in slots.values()
+        )
+        for slots in daily_groups.values()
     )
+    print(f"Loaded {total_msgs} messages across {len(daily_groups)} dates")
 
-    print(f"  Grouped into {len(conversations)} conversations")
+    # Load root collab docs
+    root_docs = []
+    for f in sorted(HERMES_COLLAB.glob("*.md")):
+        try:
+            doc = parse_root_doc(f)
+            root_docs.append(doc)
+            print(f"  Doc: {f.name}")
+        except OSError as e:
+            print(f"  WARN: could not read {f.name}: {e}")
+    print(f"Loaded {len(root_docs)} root collab docs")
 
-    html = build_html(conversations)
-    OUTPUT_HTML.write_text(html, encoding="utf-8")
-    print(f"  Written: {OUTPUT_HTML}")
-    print(f"Done. {len(conversations)} conversations rendered to hermes.html")
+    # Build and write HTML
+    output = build_html(dict(daily_groups), root_docs)
+    OUT_FILE.write_text(output, encoding="utf-8")
+    print(f"\nWrote {len(output):,} bytes → {OUT_FILE}")
 
 
 if __name__ == "__main__":
